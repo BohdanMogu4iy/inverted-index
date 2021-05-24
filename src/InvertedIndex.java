@@ -6,9 +6,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class InvertedIndex {
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<File>> indexDict;
+    long workTime;
 
     InvertedIndex(){
-        this.indexDict = new ConcurrentHashMap<String, CopyOnWriteArrayList<File>>();
+        this.indexDict = new ConcurrentHashMap<>();
     }
 
     List<String> stopWords = Arrays.asList("a", "able", "about",
@@ -28,33 +29,31 @@ public class InvertedIndex {
             "will", "with", "would", "yet", "you", "your");
     
 
-    public void indexFile(File file) throws IOException{
-        int wordsNum = 0;
+    public void indexFile(File file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
             for (String _word : line.split("\\W+")) {
                 String word = _word.toLowerCase();
                 if (stopWords.contains(word))
                     continue;
-                wordsNum++;
-                CopyOnWriteArrayList<File> idx = indexDict.putIfAbsent(word, new CopyOnWriteArrayList<File>());
+                CopyOnWriteArrayList<File> idx = indexDict.putIfAbsent(word, new CopyOnWriteArrayList<>());
                 if (idx != null) {
                     idx.addIfAbsent(file);
                 }
             }
         }
-        System.out.println("indexed " + file.getPath() + " " + wordsNum + " words");
     }
-    
 
-    public void search(List<String> words) {
+    public Set<String> search(List<String> words) {
+        Set<String> answer = new HashSet<>();
         for (String _word : words) {
-            Set<String> answer = new HashSet<String>();
             String word = _word.toLowerCase();
+            if (stopWords.contains(word))
+                continue;
             List<File> idx = indexDict.get(word);
             if (idx != null) {
                 for (File t : idx) {
-                    answer.add(t.getName());
+                    answer.add(t.getParent() + t.getName());
                 }
             }
             System.out.print(word);
@@ -63,42 +62,77 @@ public class InvertedIndex {
             }
             System.out.println("");
         }
+        return answer;
+    }
+
+    public void createIndex(int threads, FileListReader filesReader) throws InterruptedException {
+        ThreadIndex[] threadArray = new ThreadIndex[threads];
+        ArrayList<File> filesList = filesReader.getFiles();
+        int size = filesList.size();
+        for(int i = 0; i < size % threads; i++){ //розбиття на потоки
+            threadArray[i] = new ThreadIndex(this, filesList.subList( (size/threads + 1) * i,
+                    (size/threads + 1) * (i + 1)).iterator());
+        }
+        for(int i = size  % threads; i < threads; i++){ //розбиття на потоки
+            threadArray[i] = new ThreadIndex(this, filesList.subList(size/threads * i + size % threads,
+                    size/threads * (i + 1) + size % threads).iterator());
+        }
+        long startTime;
+        long finishTime;
+        startTime = System.nanoTime();
+        for(int i = 0; i < threads; i++){ //старт потоків
+            threadArray[i].start();
+        }
+        for(int i = 0; i < threads; i++){ //очікування завершення усіх потоків
+            threadArray[i].join();
+        }
+        finishTime = System.nanoTime();
+        workTime = (finishTime - startTime);
     }
 
     public void writeToFile(){}
 
+    public long getWorkTime(){
+        return workTime;
+    }
+
     public static void main(String[] args) {
-        int THREADS = 5;
+        int[] THREADS = {1, 2, 3, 4, 5, 6, 7, 8};
+        HashMap<Integer, Long> workTimeList = new HashMap<>();
         try {
-            FileListReader filesReader = new FileListReader("src/data");
-            ArrayList<File> filesList = filesReader.getFiles();
             InvertedIndex invIndex = new InvertedIndex();
-            ThreadIndex[] threadArray = new ThreadIndex[THREADS];
-            long startTime;
-            long finishTime;
-            int size = filesList.size();
-            for(int i = 0; i < size % THREADS; i++){ //розбиття на потоки
-                threadArray[i] = new ThreadIndex(invIndex, filesList.subList( (size/THREADS + 1) * i,
-                        (size/THREADS + 1) * (i + 1)).iterator());
+            FileListReader filesReader = new FileListReader("src/data");
+            for (int threads : THREADS){
+                invIndex.createIndex(threads, filesReader);
+                workTimeList.put(threads, invIndex.getWorkTime());
             }
-            for(int i = size  % THREADS; i < THREADS; i++){ //розбиття на потоки
-                threadArray[i] = new ThreadIndex(invIndex, filesList.subList(size/THREADS * i + size % THREADS,
-                        size/THREADS * (i + 1) + size % THREADS).iterator());
+            for (int th : workTimeList.keySet()){
+                System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th) / 1000000000 + " seconds");
+//                invIndex.search(Arrays.asList("Hello,Great,Bad".split(",")));
             }
-            startTime = System.nanoTime();
-            for(int i = 0; i < THREADS; i++){ //старт потоків
-                threadArray[i].start();
-            }
-            for(int i = 0; i < THREADS; i++){ //очікування завершення усіх потоків
-                threadArray[i].join();
-            }
-            finishTime = System.nanoTime();
-            long workTime = (finishTime - startTime) / 1000;
-            System.out.println("Indexing by " + THREADS + " threads took " + workTime + "nanoseconds");
-            invIndex.search(Arrays.asList("Hello,Great,Bad".split(",")));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    public static class ThreadIndex extends Thread{
+
+        private final Iterator<File> filesIter;
+        private final InvertedIndex invIndex;
+
+        public ThreadIndex(InvertedIndex invIndex, Iterator<File> filesIter){
+            this.filesIter = filesIter;
+            this.invIndex = invIndex;
+        }
+
+        public void run() {
+            while(filesIter.hasNext()){
+                try {
+                    invIndex.indexFile(filesIter.next());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }
