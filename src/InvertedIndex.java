@@ -26,7 +26,7 @@ public class InvertedIndex {
             "tis", "to", "too", "twas", "us", "wants", "was", "we", "were",
             "what", "when", "where", "which", "while", "who", "whom", "why",
             "will", "with", "would", "yet", "you", "your");
-    
+
 
     public void indexFile(File file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
