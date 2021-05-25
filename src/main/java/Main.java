@@ -5,7 +5,8 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 public class Main {
-    static final String ROOT_DATA_DIR = "src/data";
+    static final String ROOT_DATA_DIR = "src/main/resources/" +
+            "data";
 
     static public void main(String[] args) throws InterruptedException, IOException {
         String serverName = args[0];

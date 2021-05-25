@@ -93,9 +93,10 @@ public class InvertedIndex {
     public static void main(String[] args) {
         String TEST_STRING = "door";
         HashMap<String, Integer> TEST_DIR = new HashMap<>();
-        TEST_DIR.put("src/data/test_neg", 250);
-        TEST_DIR.put("src/data/train_unsup", 500);
-        TEST_DIR.put("src/data", 2000);
+        TEST_DIR.put("src/main/resources/data/test_neg", 250);
+        TEST_DIR.put("src/main/resources/data/train_unsup", 500);
+        TEST_DIR.put("src/main/resources/data", 2000);
+
         int TESTS = 10;
         int[] THREADS = {1, 2, 3, 4, 5, 6, 7, 8};
         HashMap<Integer, ArrayList<Long>> workTimeList = new HashMap<>();

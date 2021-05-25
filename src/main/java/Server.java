@@ -165,14 +165,12 @@ class Server implements Runnable {
             System.out.println( "Server processed request from : " + clientSocket.getRemoteSocketAddress());
         }
 
-        static public void main(String[] args) throws Exception {
-            int port = Integer.parseInt( args[0] );
-            // Запускаем сервер на порту port
-            Server server = new Server( port , "src/data");
-            server.listen();
-        }
-
     }
 
-
+    static public void main(String[] args) throws Exception {
+        int port = Integer.parseInt( args[0] );
+        // Запускаем сервер на порту port
+        Server server = new Server( port , "src/data");
+        server.listen();
+    }
 }
