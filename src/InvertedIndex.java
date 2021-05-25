@@ -7,8 +7,6 @@ public class InvertedIndex {
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<File>> indexDict;
 
-    long workTime;
-
     InvertedIndex(){
         this.indexDict = new ConcurrentHashMap<>();
     }
@@ -59,8 +57,6 @@ public class InvertedIndex {
                 }
             }
             answer.add(_answer);
-
-            System.out.println(word + answer.toString() + _answer.toString());
         }
 
         return answer.stream().reduce((strings, c) -> {
@@ -94,23 +90,21 @@ public class InvertedIndex {
         return (finishTime - startTime);
     }
 
-    public void writeToFile(){}
-
-    public long getWorkTime(){
-        return workTime;
-    }
-
     public static void main(String[] args) {
+        int TESTS = 10;
         int[] THREADS = {1, 2, 3, 4, 5, 6, 7, 8};
-        HashMap<Integer, Long> workTimeList = new HashMap<>();
+        HashMap<Integer, ArrayList<Long>> workTimeList = new HashMap<>();
         try {
             InvertedIndex invIndex = new InvertedIndex();
             FileListReader filesReader = new FileListReader("src/data");
-            for (int threads : THREADS){
-                workTimeList.put(threads, invIndex.createIndex(threads, filesReader));
+            for (int i =0; i < TESTS; i++){
+                for (int threads : THREADS){
+                    workTimeList.putIfAbsent(threads, new ArrayList<>());
+                    workTimeList.get(threads).add(invIndex.createIndex(threads, filesReader));
+                }
             }
             for (int th : workTimeList.keySet()){
-                System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th)+ " nanoseconds");
+                System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th).stream().mapToDouble(a -> a).sum() / TESTS + " nanoseconds");
             }
             Set<String> answer = invIndex.search(Arrays.asList("door".split(",")));
             for (String f : answer) {
