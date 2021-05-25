@@ -13,12 +13,12 @@ class Server implements Runnable {
     private final InvertedIndex invIndex;
     private final FileListReader filesReader;
 
-    Server(int port) {
+    Server(int port, String rootDataDir) {
         this.port = port;
         this.invIndex = new InvertedIndex();
-        this.filesReader = new FileListReader("src/data");
+        this.filesReader = new FileListReader(rootDataDir);
         try {
-            invIndex.createIndex(5, filesReader);
+            invIndex.createIndex(6, filesReader);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -168,7 +168,7 @@ class Server implements Runnable {
         static public void main(String[] args) throws Exception {
             int port = Integer.parseInt( args[0] );
             // Запускаем сервер на порту port
-            Server server = new Server( port );
+            Server server = new Server( port , "src/data");
             server.listen();
         }
 

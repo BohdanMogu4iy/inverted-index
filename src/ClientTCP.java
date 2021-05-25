@@ -12,19 +12,19 @@ public class ClientTCP {
     DataInputStream inputStream;
     DataOutputStream outputStream;
 
-    int clientId;
-    String serverName;
-    int port;
+    private int clientId;
+    private final String serverHost;
+    private final int port;
 
-    ClientTCP(int clientId, String serverName, int port) {
+    ClientTCP(int clientId, String serverHost, int port) {
         this.clientId = clientId;
-        this.serverName = serverName;
+        this.serverHost = serverHost;
         this.port = port;
     }
 
     public void connect() throws IOException {
         //  Создаем сокет для подальшего использования
-        socket = new Socket(serverName, port);
+        socket = new Socket(serverHost, port);
         inputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
         outputStream =  new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
@@ -57,16 +57,16 @@ public class ClientTCP {
     }
 
     @FunctionalInterface
-    interface jsonInput {
+    interface iJsonInput {
         CompletableFuture<JSONObject> call();
     }
 
     @FunctionalInterface
-    interface jsonOutput {
+    interface iJsonOutput {
         CompletableFuture<Boolean> call(JSONObject Data);
     }
 
-    jsonInput input = () -> CompletableFuture
+    iJsonInput input = () -> CompletableFuture
             .supplyAsync(
                     () -> {
                         JSONObject responseJson = null;
@@ -86,7 +86,7 @@ public class ClientTCP {
                     }
             );
 
-    jsonOutput output = (Data) -> CompletableFuture
+    iJsonOutput output = (Data) -> CompletableFuture
             .supplyAsync(
                     () -> {
                         try {

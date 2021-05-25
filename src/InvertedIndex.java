@@ -31,8 +31,8 @@ public class InvertedIndex {
     public void indexFile(File file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-            for (String _word : line.split("\\W+")) {
-                String word = _word.toLowerCase();
+            for (String wordInLine : line.split("\\W+")) {
+                String word = wordInLine.toLowerCase();
                 if (stopWords.contains(word))
                     continue;
                 CopyOnWriteArrayList<File> idx = indexDict.putIfAbsent(word, new CopyOnWriteArrayList<>());
@@ -45,23 +45,23 @@ public class InvertedIndex {
 
     public HashSet<String> search(List<String> words) {
         List<HashSet<String>> answer = new ArrayList<>();
-        for (String _word : words) {
-            String word = _word.toLowerCase();
+        for (String wordInList : words) {
+            String word = wordInList.toLowerCase();
             if (stopWords.contains(word))
                 continue;
             List<File> idx = indexDict.get(word);
-            HashSet<String> _answer = new HashSet<>();
+            HashSet<String> wordAnswer = new HashSet<>();
             if (idx != null) {
                 for (File t : idx) {
-                    _answer.add(t.getParentFile() + "/" + t.getName());
+                    wordAnswer.add(t.getParentFile() + "/" + t.getName());
                 }
             }
-            answer.add(_answer);
+            answer.add(wordAnswer);
         }
 
-        return answer.stream().reduce((strings, c) -> {
-            strings.retainAll(c);
-            return strings;
+        return answer.stream().reduce((resultAnswer, a) -> {
+            resultAnswer.retainAll(a);
+            return resultAnswer;
         }).get();
     }
 
@@ -91,6 +91,7 @@ public class InvertedIndex {
     }
 
     public static void main(String[] args) {
+        String TEST_STRING = "door";
         int TESTS = 10;
         int[] THREADS = {1, 2, 3, 4, 5, 6, 7, 8};
         HashMap<Integer, ArrayList<Long>> workTimeList = new HashMap<>();
@@ -106,7 +107,8 @@ public class InvertedIndex {
             for (int th : workTimeList.keySet()){
                 System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th).stream().mapToDouble(a -> a).sum() / TESTS + " nanoseconds");
             }
-            Set<String> answer = invIndex.search(Arrays.asList("door".split(",")));
+            System.out.println("Test search for : " + TEST_STRING + "\ndocuments :\n");
+            Set<String> answer = invIndex.search(Arrays.asList(TEST_STRING.split("\\W+")));
             for (String f : answer) {
                 System.out.println(f);
             }

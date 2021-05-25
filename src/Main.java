@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 public class Main {
+    static final String ROOT_DATA_DIR = "src/data";
+
     static public void main(String[] args) throws InterruptedException, IOException {
         String serverName = args[0];
         int port = Integer.parseInt(args[1]);
@@ -18,7 +20,7 @@ public class Main {
         clientMap.put(new ClientTCP(5, serverName, port), createRequest("{endpoint: createIndex}", "{threads : 5}"));
         clientMap.put(new ClientTCP(6, serverName, port), createRequest("{endpoint: createIndex}", "{threads : 8}"));
 
-        Server server = new Server(port);
+        Server server = new Server(port, ROOT_DATA_DIR);
         server.listen();
 
         Thread.sleep(2000);
