@@ -6,6 +6,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class InvertedIndex {
 
     private final ConcurrentHashMap<String, CopyOnWriteArrayList<File>> indexDict;
+
     long workTime;
 
     InvertedIndex(){
@@ -44,28 +45,31 @@ public class InvertedIndex {
         }
     }
 
-    public Set<String> search(List<String> words) {
-        Set<String> answer = new HashSet<>();
+    public HashSet<String> search(List<String> words) {
+        List<HashSet<String>> answer = new ArrayList<>();
         for (String _word : words) {
             String word = _word.toLowerCase();
             if (stopWords.contains(word))
                 continue;
             List<File> idx = indexDict.get(word);
+            HashSet<String> _answer = new HashSet<>();
             if (idx != null) {
                 for (File t : idx) {
-                    answer.add(t.getParent() + t.getName());
+                    _answer.add(t.getParentFile() + "/" + t.getName());
                 }
             }
-            System.out.print(word);
-            for (String f : answer) {
-                System.out.print(" " + f);
-            }
-            System.out.println("");
+            answer.add(_answer);
+
+            System.out.println(word + answer.toString() + _answer.toString());
         }
-        return answer;
+
+        return answer.stream().reduce((strings, c) -> {
+            strings.retainAll(c);
+            return strings;
+        }).get();
     }
 
-    public void createIndex(int threads, FileListReader filesReader) throws InterruptedException {
+    public long createIndex(int threads, FileListReader filesReader) throws InterruptedException {
         ThreadIndex[] threadArray = new ThreadIndex[threads];
         ArrayList<File> filesList = filesReader.getFiles();
         int size = filesList.size();
@@ -87,7 +91,7 @@ public class InvertedIndex {
             threadArray[i].join();
         }
         finishTime = System.nanoTime();
-        workTime = (finishTime - startTime);
+        return (finishTime - startTime);
     }
 
     public void writeToFile(){}
@@ -103,12 +107,14 @@ public class InvertedIndex {
             InvertedIndex invIndex = new InvertedIndex();
             FileListReader filesReader = new FileListReader("src/data");
             for (int threads : THREADS){
-                invIndex.createIndex(threads, filesReader);
-                workTimeList.put(threads, invIndex.getWorkTime());
+                workTimeList.put(threads, invIndex.createIndex(threads, filesReader));
             }
             for (int th : workTimeList.keySet()){
-                System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th) / 1000000000 + " seconds");
-//                invIndex.search(Arrays.asList("Hello,Great,Bad".split(",")));
+                System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th)+ " nanoseconds");
+            }
+            Set<String> answer = invIndex.search(Arrays.asList("door".split(",")));
+            for (String f : answer) {
+                System.out.println(f);
             }
         } catch (Exception e) {
             e.printStackTrace();
