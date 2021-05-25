@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class FileListReader {
 
-    ArrayList<File> fileList = new ArrayList<File>();
+    ArrayList<File> fileList = new ArrayList<>();
 
     FileListReader(String dataDir){
         Path dir = Paths.get(dataDir);
