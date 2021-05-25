@@ -92,21 +92,31 @@ public class InvertedIndex {
 
     public static void main(String[] args) {
         String TEST_STRING = "door";
+        HashMap<String, Integer> TEST_DIR = new HashMap<>();
+        TEST_DIR.put("src/data/test_neg", 250);
+        TEST_DIR.put("src/data/train_unsup", 500);
+        TEST_DIR.put("src/data", 2000);
         int TESTS = 10;
         int[] THREADS = {1, 2, 3, 4, 5, 6, 7, 8};
         HashMap<Integer, ArrayList<Long>> workTimeList = new HashMap<>();
         try {
             InvertedIndex invIndex = new InvertedIndex();
-            FileListReader filesReader = new FileListReader("src/data");
-            for (int i =0; i < TESTS; i++){
-                for (int threads : THREADS){
-                    workTimeList.putIfAbsent(threads, new ArrayList<>());
-                    workTimeList.get(threads).add(invIndex.createIndex(threads, filesReader));
+            for (String dir : TEST_DIR.keySet()){
+                System.out.println("Test for dir : " + dir + " with "  + TEST_DIR.get(dir) + " documents");
+                FileListReader filesReader = new FileListReader(dir);
+                for (int i =0; i < TESTS; i++){
+                    for (int threads : THREADS){
+                        workTimeList.putIfAbsent(threads, new ArrayList<>());
+                        workTimeList.get(threads).add(invIndex.createIndex(threads, filesReader));
+                    }
                 }
+                for (int th : workTimeList.keySet()){
+                    System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th).stream().mapToDouble(a -> a).sum() / TESTS + " nanoseconds");
+                }
+                workTimeList = new HashMap<>();
+                System.out.println("");
             }
-            for (int th : workTimeList.keySet()){
-                System.out.println("Indexing by " + th + " threads took " + workTimeList.get(th).stream().mapToDouble(a -> a).sum() / TESTS + " nanoseconds");
-            }
+
             System.out.println("Test search for : " + TEST_STRING + "\ndocuments :\n");
             Set<String> answer = invIndex.search(Arrays.asList(TEST_STRING.split("\\W+")));
             for (String f : answer) {
