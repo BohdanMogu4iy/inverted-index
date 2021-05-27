@@ -24,12 +24,12 @@ class Server implements Runnable {
         }
     }
 
-    public void listen(){
-        new Thread( this ).start();
+    public void listen() {
+        new Thread(this).start();
         System.out.println("Server is listening on port : " + port);
     }
 
-    public void run () {
+    public void run() {
         ServerSocket server = null;
         try {
             server = new ServerSocket(port);
@@ -42,16 +42,13 @@ class Server implements Runnable {
                 ClientHandler clientSock = new ClientHandler(client, invIndex, filesReader);
                 new Thread(clientSock).start();
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-        finally {
+        } finally {
             if (server != null) {
                 try {
                     server.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
@@ -62,15 +59,20 @@ class Server implements Runnable {
         private final Socket clientSocket;
         private final InvertedIndex invIndex;
         private final FileListReader filesReader;
+        private final DataOutputStream out;
+        private final DataInputStream in;
 
-        ClientHandler(Socket socket, InvertedIndex invIndex, FileListReader filesReader) {
+        ClientHandler(Socket socket, InvertedIndex invIndex, FileListReader filesReader) throws IOException {
             this.clientSocket = socket;
             this.invIndex = invIndex;
             this.filesReader = filesReader;
+            this.out = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
+            this.in = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+
         }
 
         public void run() {
-            while (true){
+            while (true) {
                 try {
                     processInput();
 
@@ -81,15 +83,9 @@ class Server implements Runnable {
             }
         }
 
-        private void processInput() throws IOException{
-            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
-            DataInputStream in = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+        private void processInput() throws IOException {
 
             int length = in.readInt();
-
-            if (length == 0){
-                return;
-            }
 
             byte[] requestData = new byte[length];
 
@@ -108,7 +104,7 @@ class Server implements Runnable {
 
             switch (endpoint) {
                 case "search" -> {
-                    try{
+                    try {
                         String search = (String) requestBody.get("searchQuery");
                         responseHeaders.put("status", 200);
                         responseBody.put("searchQuery", search);
@@ -116,13 +112,13 @@ class Server implements Runnable {
                         responseBody.put("documents", invIndex.search(searchList));
                         responseBody.put("info", "You have got all documents related to your search-query");
 
-                    }catch (JSONException e){
+                    } catch (JSONException e) {
                         responseHeaders.put("status", 400);
                         responseBody.put("info", "Bad request! Request body doesn't have needed fields.");
                     }
                 }
                 case "createIndex" -> {
-                    try{
+                    try {
                         Integer threads = (Integer) requestBody.get("threads");
 
                         long workTime = -1;
@@ -131,7 +127,7 @@ class Server implements Runnable {
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        if (workTime == -1){
+                        if (workTime == -1) {
                             responseHeaders.put("status", 500);
                             responseBody.put("info", "Some server error.");
                             break;
@@ -142,7 +138,7 @@ class Server implements Runnable {
                         responseBody.put("type", "nanoseconds");
                         responseBody.put("info", "Inverted index is created.");
 
-                    }catch (JSONException e){
+                    } catch (JSONException e) {
                         responseHeaders.put("status", 400);
                         responseBody.put("info", "Bad request! Request body doesn't have needed fields.");
                     }
@@ -162,13 +158,13 @@ class Server implements Runnable {
             out.write(responseData);
             out.flush();
 
-            System.out.println( "Server processed request from : " + clientSocket.getRemoteSocketAddress());
+            System.out.println("Server processed request from : " + clientSocket.getRemoteSocketAddress());
         }
 
         static public void main(String[] args) throws Exception {
-            int port = Integer.parseInt( args[0] );
+            int port = Integer.parseInt(args[0]);
             // Запускаем сервер на порту port
-            Server server = new Server( port , "src/data");
+            Server server = new Server(port, "src/data");
             server.listen();
         }
 
