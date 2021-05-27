@@ -12,18 +12,13 @@ public class Main {
         int port = Integer.parseInt(args[1]);
 
         HashMap<ClientTCP, JSONObject> clientMap = new HashMap<>();
-        clientMap.put(new ClientTCP(0, serverName, port), createRequest("{endpoint: search}", "{search-Query : awesome i love it}"));
-        clientMap.put(new ClientTCP(1, serverName, port), createRequest("{endpoint: search}", "{searchQuery : little human}"));
-        clientMap.put(new ClientTCP(2, serverName, port), createRequest("{endpoint: search}", "{searchQuery : awesome little human}"));
-        clientMap.put(new ClientTCP(3, serverName, port), createRequest("{endpoint: createIndex}", "{threads : 1}"));
-        clientMap.put(new ClientTCP(4, serverName, port), createRequest("{endpoint: createIndex}", "{threads : 3}"));
-        clientMap.put(new ClientTCP(5, serverName, port), createRequest("{endpoint: createIndex}", "{threads : 5}"));
-        clientMap.put(new ClientTCP(6, serverName, port), createRequest("{endpoint: createIndex}", "{threads : 8}"));
-
+        clientMap.put(new ClientTCP(0, serverName, port), createRequest("{endpoint: search}", "{searchQuery : personalities reasonably}"));
+        clientMap.put(new ClientTCP(1, serverName, port), createRequest("{endpoint: search}", "{searchQuery : apple}"));
+        clientMap.put(new ClientTCP(2, serverName, port), createRequest("{endpoint: search}", "{searchQuery : little human}"));
         Server server = new Server(port, ROOT_DATA_DIR);
         server.listen();
 
-        Thread.sleep(2000);
+        Thread.sleep(10000);
 
         for (ClientTCP client : clientMap.keySet()){
             try {

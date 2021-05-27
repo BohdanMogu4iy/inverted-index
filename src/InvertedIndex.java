@@ -35,10 +35,9 @@ public class InvertedIndex {
                 String word = wordInLine.toLowerCase();
                 if (stopWords.contains(word))
                     continue;
-                CopyOnWriteArrayList<File> idx = indexDict.putIfAbsent(word, new CopyOnWriteArrayList<>());
-                if (idx != null) {
-                    idx.addIfAbsent(file);
-                }
+                indexDict.putIfAbsent(word, new CopyOnWriteArrayList<>());
+                CopyOnWriteArrayList<File> idx = indexDict.get(word);
+                idx.addIfAbsent(file);
             }
         }
     }
@@ -91,13 +90,13 @@ public class InvertedIndex {
     }
 
     public static void main(String[] args) {
-        String TEST_STRING = "door";
+        String TEST_STRING = "bad";
         HashMap<String, Integer> TEST_DIR = new HashMap<>();
         TEST_DIR.put("src/data/test_neg", 250);
         TEST_DIR.put("src/data/train_unsup", 500);
         TEST_DIR.put("src/data", 2000);
         int TESTS = 10;
-        int[] THREADS = {1, 2, 3, 4, 5, 6, 7, 8};
+        int[] THREADS = {1,2,3,4,5,6,7,8};
         HashMap<Integer, ArrayList<Long>> workTimeList = new HashMap<>();
         try {
             InvertedIndex invIndex = new InvertedIndex();
@@ -117,7 +116,7 @@ public class InvertedIndex {
                 System.out.println("");
             }
 
-            System.out.println("Test search for : " + TEST_STRING + "\ndocuments :\n");
+            System.out.println("Test search for : " + TEST_STRING + "\ndocuments :");
             Set<String> answer = invIndex.search(Arrays.asList(TEST_STRING.split("\\W+")));
             for (String f : answer) {
                 System.out.println(f);
